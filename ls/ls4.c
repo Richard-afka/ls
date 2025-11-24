@@ -27,10 +27,6 @@
 //     int flag_i = 0;//输出i节点的索引信息
 //     int flag_s = 0;//在文件名前面输出文件大小
 // };
-// struct dirent{
-//     ino_t d_ino;目录项的i节点
-//     char* d_name；//目录项的名称
-// };
 // struct stat {
 //     dev_t st_dev;          // 文件所在设备的ID
 //     ino_t st_ino;          // 文件的inode号
@@ -46,15 +42,10 @@
 //     time_t st_mtime;       // 文件最后修改时间
 //     time_t st_ctime;       // 文件的元数据最后修改时间
 // };
-// void print_colored_file(const char* filename) {
-//     const char* color = get_file_color(filename);
-//     printf("%s%s%s", color, filename, COLOR_RESET);
-// }
 void list_directory(char* path);
 void list_name(char* path);
 void list_l(char* path);
 void list_R(char* path);
-// struct file** list_t(char* path);
 int list_r(const struct dirent** a, const struct dirent** b);
 int list_t(const struct dirent** a, const struct dirent** b);
 void list_i(char* path);
@@ -67,21 +58,11 @@ char type(struct stat* sb);
 int nature_sort(const struct dirent** a, const struct dirent** b);
 const char* get_cwd(const struct dirent** a);
 char* get_color(mode_t mode);
-// int optind;
-// char* optarg;
-// struct file {
-//     char* pathname;
-//     char* name;
-//     time_t time;
-// };
 int flag_a = 0, flag_l = 0, flag_R = 0, flag_t = 0, flag_r = 0, flag_i = 0,
     flag_s = 0;
 int main(int argc, char* argv[]) {
-    // int flag_a = 0,flag_l = 0,flag_R = 0,flag_t = 0,flag_r = 0,flag_i
-    // =0,flag_s = 0;
     int opt;
     while ((opt = getopt(argc, argv, "alRtris")) != -1) {
-        // printf("11\n");
         switch (opt) {
             case 'a':
                 flag_a = 1;
@@ -109,25 +90,28 @@ int main(int argc, char* argv[]) {
                 break;
         }
     }
-    // printf("%d\n", flag_l);
     char** path = (char**)malloc(10 * sizeof(char*));
     int j = 0;
     if (argv[argc - 1][0] == '-' || argc == 1) {
         path[j++] = ".";
     } else {
         for (int i = 1; i < argc; i++) {
-            // int j = 0;
             if (argv[i][0] == '-')
                 continue;
             path[j++] = argv[i];
         }
     }
     for (int i = 0; i < j; i++) {
-        printf("%s:\n", path[i]);
+        if(flag_R){
+        list_R(path[i]);
+    }else{ 
+        if (j>1){
+            printf("%s:\n", path[i]);
+        }
         list_directory(path[i]);
     }
+    }
     free(path);
-    // printf("\n");
 }
 void list_name(char* path) {
     int n = 0;
@@ -135,14 +119,8 @@ void list_name(char* path) {
     struct dirent** namelist;
     char pathname[PATH_MAX];
     struct stat* sb = (struct stat*)malloc(sizeof(struct stat));
-    // if (flag_a == 0 && path[0] == '.') {
-    //     return;
-    // }
-    // (struct dirent**)malloc(len * sizeof(struct dirent*));
     if (flag_t) {
-        // printf("127\n");
         if ((n = scandir(path, &namelist, filter, list_t)) == -1) {
-            // printf("2");
             printf("扫描出错！\n");
             return;
         }
@@ -153,13 +131,11 @@ void list_name(char* path) {
         }
     } else {
         if ((n = scandir(path, &namelist, filter, nature_sort)) == -1) {
-           // printf("9");
             printf("扫描出错！\n");
             return;
         }
     }
     for (int i = 0; i < n; i++) {
-        // printf("1\n");
         snprintf(pathname, PATH_MAX, "%s/%s", path, namelist[i]->d_name);
         if ((m = stat(pathname, sb)) == -1) {
             perror("获取信息失败！\n");
@@ -170,16 +146,9 @@ void list_name(char* path) {
         free(namelist[i]);
     }
     free(namelist);
+    free(sb);
 }
 void list_directory(char* path) {
-    if (flag_t && flag_r) {
-        // list_t(path);
-        // list_r(path);
-    } else if (flag_t) {
-        // list_t(path);
-    } else if (flag_r) {
-        // list_r(path);
-    }
     if (flag_l) {
         list_l(path);
     } else if (flag_i && flag_s) {
@@ -187,17 +156,11 @@ void list_directory(char* path) {
     } else if (flag_s) {
         list_s(path);
     } else if (flag_i) {
-        // printf("140\n");
         list_i(path);
     }
-    if (flag_R) {
-        list_R(path);
-    }
-    if (!flag_i && !flag_l && !flag_R && !flag_s) {
+    if (!flag_i && !flag_l && !flag_s) {
         list_name(path);
     }
-    // path++;
-    // }
 }
 int filter(const struct dirent* entry) {
     if (flag_a == 0 &&
@@ -318,16 +281,23 @@ void list_i(char* path) {
             return;
         }
     }
-    if (flag_s) {
-        for (int i = 0; i < m; i++) {
+    // if (flag_s) {
+    //     for (int i = 0; i < m; i++) {
+    //         snprintf(pathname, PATH_MAX, "%s/%s", path, namelist[i]->d_name);
+    //         if ((n = stat(pathname, sb)) == -1) {
+    //             perror("获取信息失败！\n");
+    //             continue;
+    //         }
+    //     }
+    // }
+    for (int i = 0; i < m; i++) {
+        //for (int i = 0; i < m; i++) {
             snprintf(pathname, PATH_MAX, "%s/%s", path, namelist[i]->d_name);
             if ((n = stat(pathname, sb)) == -1) {
                 perror("获取信息失败！\n");
                 continue;
             }
-        }
-    }
-    for (int i = 0; i < m; i++) {
+       // }
         if (flag_s) {
             printf("%-8ld %2ld ", (long)namelist[i]->d_ino,
                    (long)sb->st_blocks);
@@ -336,12 +306,14 @@ void list_i(char* path) {
         } else {
             printf("%-8ld ", (long)namelist[i]->d_ino);
             char* color = get_color(sb->st_mode);
+            //printf("color=%s\n", color);
             printf("%s%s\033[0m\n", color, namelist[i]->d_name);
         }
 
         free(namelist[i]);
     }
     free(namelist);
+    free(sb);
 }
 char type(struct stat* sb) {
     char c;
@@ -387,20 +359,26 @@ void list_s(char* path) {
             return;
         }
     }
+    // for (int i = 0; i < m; i++) {
+    //     snprintf(pathname, PATH_MAX, "%s/%s", path, namelist[i]->d_name);
+    //     if ((n = stat(pathname, sb)) == -1) {
+    //         perror("获取信息失败！\n");
+    //         continue;
+    //     }
+    // }
     for (int i = 0; i < m; i++) {
         snprintf(pathname, PATH_MAX, "%s/%s", path, namelist[i]->d_name);
         if ((n = stat(pathname, sb)) == -1) {
             perror("获取信息失败！\n");
             continue;
         }
-    }
-    for (int i = 0; i < m; i++) {
         printf("%-2ld ", (long)sb->st_blocks);
         char* color = get_color(sb->st_mode);
         printf("%s%s\033[0m\n", color, namelist[i]->d_name);
         free(namelist[i]);
     }
         free(namelist);
+        free(sb);
 }
 int list_r(const struct dirent** a, const struct dirent** b) {
     return strcmp((*b)->d_name, (*a)->d_name);
@@ -440,20 +418,74 @@ int list_t(const struct dirent** a, const struct dirent** b) {
     if (flag_r) {
         result=-result;
     }
+    free(sb_a);
+    free(sb_b);
     return result;
 }
 char* get_color(mode_t mode) {
-    char* color = COLOR_WHITE;  // 默认白色
+   // printf("------");
+    char* color = COLOR_WHITE;
     if (S_ISDIR(mode)) {
         color=COLOR_BLUE;
-        printf("blue\n");  // 粗体蓝色 - 目录
+       // printf("==================");
     } else if (S_ISLNK(mode)) {
-        color = COLOR_CYAN;  // 粗体青色 - 符号链接
+        color = COLOR_CYAN;
     } else if (S_ISFIFO(mode)) {
-        color=COLOR_YELLOW;  // 黄色 - 管道
+        color=COLOR_YELLOW;
     } else if (mode & S_IXUSR) {
-        color=COLOR_GREEN;  // 粗体绿色 - 可执行文件
+        color=COLOR_GREEN;
     }
     return color;
 }
-void list_R(char* path) {}
+void list_R(char* path) {
+    list_directory(path);
+    printf("\n");
+    DIR* dirp = opendir(path);
+    char pathname[PATH_MAX];
+    int n;
+    if (!dirp) {
+        perror("opendir失败");
+        return;
+    }
+    struct dirent* entry;
+    while ((entry = readdir(dirp)) != NULL) {
+    struct stat* sb = (struct stat*)malloc(sizeof(struct stat));
+    snprintf(pathname, PATH_MAX, "%s/%s", path, entry->d_name);
+    
+    if ((n = lstat(pathname, sb)) == -1) {
+       // printf("433\n");
+        perror("获取信息失败！\n");
+    }
+    char c = type(sb);
+   // printf("%c\n", c);
+
+    if (c == 'd') {
+        //printf("%s:\n", pathname);
+        // if (flag_a == 0 &&
+        //     (entry->d_name[0] == '.' || strcmp(entry->d_name, "..") == 0)) {
+        //     break;
+        // }
+        if ((strcmp(entry->d_name, ".") == 0 ||
+             strcmp(entry->d_name, "..") == 0)) {
+            continue;
+        }
+        if(!flag_a&&entry->d_name[0]=='.'){
+            continue;
+        }
+        if (entry->d_name != "." && entry->d_name != "..") {
+            printf("%s:\n", pathname);
+            list_R(pathname);
+        }
+        }
+        //printf("%s\t", entry->d_name);
+        //snprintf(pathname, PATH_MAX, "%s/%s", path, namelist->d_name);
+        free(sb);
+    }
+    if (entry == NULL) {
+        if (entry != 0) {
+            perror("readdir错误");
+        }
+    }
+    closedir(dirp);
+    
+}

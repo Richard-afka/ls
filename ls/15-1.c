@@ -2,8 +2,6 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <time.h>
-#include "
-
 #include "tlpi_hdr.h"
 ststic void displayStatInfo(constnstruct stat* sb) {
     printf("File type:      ");
