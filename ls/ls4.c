@@ -12,12 +12,15 @@
 #define STR_SIZE sizeof("rwxrwxrwx")
 #define PATH_MAX 4096
 #define COLOR_RESET "\033[0m"
+#define COLOR_BLACK "\033[30m"
 #define COLOR_RED "\033[31m"
 #define COLOR_GREEN "\033[32m"
 #define COLOR_YELLOW "\033[33m"
 #define COLOR_BLUE "\033[34m"
+#define COLOR_MAGENTA "\033[35m"
 #define COLOR_CYAN "\033[36m"
 #define COLOR_WHITE "\033[37m"
+#define BOLD "\033[1m"
 // struct parametric{
 //     int flag_a = 0;//列出所有文件
 //     int flag_l = 0;//列出详细信息
@@ -57,7 +60,7 @@ char* get_gid(struct stat* sb);
 char type(struct stat* sb);
 int nature_sort(const struct dirent** a, const struct dirent** b);
 const char* get_cwd(const struct dirent** a);
-char* get_color(mode_t mode);
+char* get_color(mode_t mode, const char* filename);
 int flag_a = 0, flag_l = 0, flag_R = 0, flag_t = 0, flag_r = 0, flag_i = 0,
     flag_s = 0;
 int main(int argc, char* argv[]) {
@@ -141,7 +144,7 @@ void list_name(char* path) {
             perror("获取信息失败！\n");
             continue;
         }
-        char* color = get_color(sb->st_mode);
+        char* color = get_color(sb->st_mode, namelist[i]->d_name);
         printf("%s%s\033[0m\n", color, namelist[i]->d_name);
         free(namelist[i]);
     }
@@ -213,26 +216,26 @@ void list_l(char* path) {
             printf("%-8ld %2ld %c%s %2ld %s %s%6ld %s ", namelist[i]->d_ino,
                    (long)sb->st_blocks, c, strb, (long)sb->st_nlink,
                    get_uid(sb), get_gid(sb), (long)sb->st_size, time_str);
-            char* color = get_color(sb->st_mode);
+            char* color = get_color(sb->st_mode, namelist[i]->d_name);
             printf("%s%s\033[0m\n", color, namelist[i]->d_name);
         } else if (flag_i && !flag_s) {
             printf("%-8ld%c%s %2ld %s %s%6ld %s ", namelist[i]->d_ino, c,
                    strb, (long)sb->st_nlink, get_uid(sb), get_gid(sb),
                    (long)sb->st_size, time_str);
-            char* color = get_color(sb->st_mode);
+            char* color = get_color(sb->st_mode, namelist[i]->d_name);
             printf("%s%s\033[0m\n", color, namelist[i]->d_name);
         } else if(flag_s&&!flag_i){
             printf("192");
             printf("%-2ld %c%s %2ld %s %s%6ld %s ", (long)sb->st_blocks, c,
                    strb, (long)sb->st_nlink, get_uid(sb), get_gid(sb),
                    (long)sb->st_size, time_str);
-            char* color = get_color(sb->st_mode);
+            char* color = get_color(sb->st_mode, namelist[i]->d_name);
             printf("%s%s\033[0m\n", color, namelist[i]->d_name);
         }else {
             printf("%c%s %2ld %s %s%6ld %s ", c, strb, (long)sb->st_nlink,
                    get_uid(sb), get_gid(sb), (long)sb->st_size, time_str
                 );
-            char* color = get_color(sb->st_mode);
+            char* color = get_color(sb->st_mode, namelist[i]->d_name);
             printf("%s%s\033[0m\n", color, namelist[i]->d_name);
         }
         free(namelist[i]);
@@ -301,11 +304,11 @@ void list_i(char* path) {
         if (flag_s) {
             printf("%-8ld %2ld ", (long)namelist[i]->d_ino,
                    (long)sb->st_blocks);
-            char* color = get_color(sb->st_mode);
+            char* color = get_color(sb->st_mode, namelist[i]->d_name);
             printf("%s%s\033[0m\n", color, namelist[i]->d_name);
         } else {
             printf("%-8ld ", (long)namelist[i]->d_ino);
-            char* color = get_color(sb->st_mode);
+            char* color = get_color(sb->st_mode, namelist[i]->d_name);
             //printf("color=%s\n", color);
             printf("%s%s\033[0m\n", color, namelist[i]->d_name);
         }
@@ -373,7 +376,7 @@ void list_s(char* path) {
             continue;
         }
         printf("%-2ld ", (long)sb->st_blocks);
-        char* color = get_color(sb->st_mode);
+        char* color = get_color(sb->st_mode, namelist[i]->d_name);
         printf("%s%s\033[0m\n", color, namelist[i]->d_name);
         free(namelist[i]);
     }
@@ -422,21 +425,65 @@ int list_t(const struct dirent** a, const struct dirent** b) {
     free(sb_b);
     return result;
 }
-char* get_color(mode_t mode) {
-   // printf("------");
+// char* get_color(mode_t mode) {
+//    // printf("------");
+//     char* color = COLOR_WHITE;
+//     if (S_ISDIR(mode)) {
+//         color=COLOR_BLUE;
+//        // printf("==================");
+//     } else if (S_ISLNK(mode)) {
+//         color = COLOR_CYAN;
+//     } else if (S_ISFIFO(mode)) {
+//         color=COLOR_YELLOW;
+//     } else if (mode & S_IXUSR) {
+//         color=COLOR_GREEN;
+//     }
+//     return color;
+// }
+char* get_color(mode_t mode, const char* filename) {
     char* color = COLOR_WHITE;
+
     if (S_ISDIR(mode)) {
-        color=COLOR_BLUE;
-       // printf("==================");
+        color = COLOR_BLUE;  // 目录 - 蓝色
     } else if (S_ISLNK(mode)) {
-        color = COLOR_CYAN;
+        color = COLOR_CYAN;  // 符号链接 - 青色
     } else if (S_ISFIFO(mode)) {
-        color=COLOR_YELLOW;
-    } else if (mode & S_IXUSR) {
-        color=COLOR_GREEN;
+        color = COLOR_YELLOW;  // 管道 - 黄色
+    } else if (S_ISSOCK(mode)) {
+        color = COLOR_MAGENTA;  // Socket - 紫色
+    } else if (S_ISCHR(mode) || S_ISBLK(mode)) {
+        color = BOLD COLOR_YELLOW;  // 设备文件 - 粗体黄色
+    } else if (mode & (S_IXUSR | S_IXGRP | S_IXOTH)) {
+        color = COLOR_GREEN;  // 可执行文件 - 绿色
+    } else if (S_ISREG(mode)) {
+        // 根据文件扩展名设置颜色
+        const char* ext = strrchr(filename, '.');
+        if (ext != NULL) {
+            ext++;  // 跳过点号
+            // 压缩文件 - 红色
+            if (strcasecmp(ext, "gz") == 0 || strcasecmp(ext, "zip") == 0 ||
+                strcasecmp(ext, "rar") == 0 || strcasecmp(ext, "7z") == 0 ||
+                strcasecmp(ext, "tar") == 0 || strcasecmp(ext, "bz2") == 0 ||
+                strcasecmp(ext, "xz") == 0 || strcasecmp(ext, "tgz") == 0) {
+                color = COLOR_RED;
+            }
+            // 图片文件 - 紫色
+            else if (strcasecmp(ext, "jpg") == 0 ||
+                     strcasecmp(ext, "jpeg") == 0 ||
+                     strcasecmp(ext, "png") == 0 ||
+                     strcasecmp(ext, "gif") == 0 ||
+                     strcasecmp(ext, "bmp") == 0 ||
+                     strcasecmp(ext, "svg") == 0 ||
+                     strcasecmp(ext, "ico") == 0 ||
+                     strcasecmp(ext, "webp") == 0) {
+                color = COLOR_MAGENTA;
+            }
+        }
     }
+
     return color;
 }
+
 void list_R(char* path) {
     list_directory(path);
     printf("\n");
@@ -450,32 +497,36 @@ void list_R(char* path) {
     struct dirent* entry;
     while ((entry = readdir(dirp)) != NULL) {
     struct stat* sb = (struct stat*)malloc(sizeof(struct stat));
-    snprintf(pathname, PATH_MAX, "%s/%s", path, entry->d_name);
-    
-    if ((n = lstat(pathname, sb)) == -1) {
-       // printf("433\n");
-        perror("获取信息失败！\n");
+    int len = strlen(path);
+    if (len > 0 && path[len - 1] == '/') {
+        snprintf(pathname, PATH_MAX, "%s%s",path, entry->d_name);
+    } else {
+        snprintf(pathname, PATH_MAX, "%s/%s", path, entry->d_name);
     }
-    char c = type(sb);
-   // printf("%c\n", c);
+        if ((n = lstat(pathname, sb)) == -1) {
+            // printf("433\n");
+            perror("获取信息失败！\n");
+        }
+        char c = type(sb);
+        // printf("%c\n", c);
 
-    if (c == 'd') {
-        //printf("%s:\n", pathname);
-        // if (flag_a == 0 &&
-        //     (entry->d_name[0] == '.' || strcmp(entry->d_name, "..") == 0)) {
-        //     break;
-        // }
-        if ((strcmp(entry->d_name, ".") == 0 ||
-             strcmp(entry->d_name, "..") == 0)) {
-            continue;
-        }
-        if(!flag_a&&entry->d_name[0]=='.'){
-            continue;
-        }
-        if (entry->d_name != "." && entry->d_name != "..") {
-            printf("%s:\n", pathname);
-            list_R(pathname);
-        }
+        if (c == 'd') {
+            // printf("%s:\n", pathname);
+            //  if (flag_a == 0 &&
+            //      (entry->d_name[0] == '.' || strcmp(entry->d_name, "..") ==
+            //      0)) { break;
+            //  }
+            if ((strcmp(entry->d_name, ".") == 0 ||
+                 strcmp(entry->d_name, "..") == 0)) {
+                continue;
+            }
+            if (!flag_a && entry->d_name[0] == '.') {
+                continue;
+            }
+            if (entry->d_name != "." && entry->d_name != "..") {
+                printf("%s:\n", pathname);
+                list_R(pathname);
+            }
         }
         //printf("%s\t", entry->d_name);
         //snprintf(pathname, PATH_MAX, "%s/%s", path, namelist->d_name);
