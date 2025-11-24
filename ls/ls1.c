@@ -9,7 +9,6 @@ void list_directory(const char* path) {
     if (!dirp) {
         perror("opendir失败");
         return;
-        
     }
     struct dirent* entry;
     //int error = 0;
