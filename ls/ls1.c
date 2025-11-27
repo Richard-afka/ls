@@ -11,7 +11,7 @@ void list_directory(const char* path) {
         return;
     }
     struct dirent* entry;
-    //int error = 0;
+    // int error = 0;
     while ((entry = readdir(dirp)) != NULL) {
         if (entry->d_name[0] == '.') {
             continue;
@@ -32,4 +32,5 @@ int main(int argc, char* argv[]) {
     list_directory(path);
     printf("\n");
     return 0;
+    
 }
